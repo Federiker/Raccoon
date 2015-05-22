@@ -11,6 +11,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raccoon.Objects.Tests", "Ra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Raccoon.Console", "Raccoon.Console\Raccoon.Console.csproj", "{7B9DD7A8-0D60-4478-B709-76F2A3D089B5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{ECD14A22-F4E9-4EC5-AD7C-FE9417C19F68}"
+	ProjectSection(SolutionItems) = preProject
+		mappings.json = mappings.json
+		river.json = river.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

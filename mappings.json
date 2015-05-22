@@ -1,0 +1,3229 @@
+{
+    "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1,
+        "refresh_interval": "10m",
+        "analysis": {
+            "filter": {
+                "number_synonyms": {
+                    "type": "synonym",
+                    "synonyms": [
+                        "2, ii, two",
+                        "3, iii, three",
+                        "4, iv, four",
+                        "5, v, five",
+                        "6, vi, six",
+                        "7, vii, seven",
+                        "8, viii, eight",
+                        "9, ix, viiii, nine"
+                    ]
+                },
+                "place_synonyms": {
+                    "type": "synonym",
+                    "synonyms": [
+                        "burma, myanmar",
+                        "great britain, unit kingdom",
+                        "leningrad, saint petersburg, petrograd",
+                        "stalingrad, volgograd",
+                        "ho chi minh city, saigon",
+                        "unit state, usa, unit state america",
+                        "nanching, nankin, nanking, nanjing",
+                        "beijing, peking"
+                    ]
+                },
+                "other_synonyms": {
+                    "type": "synonym",
+                    "synonyms": [
+                        "scifi, sci fi, science fiction"
+                    ]
+                },
+                "name_shingle": {
+                    "type": "shingle",
+                    "min_shingle_size": 2,
+                    "max_shingle_size": 3,
+                    "output_unigrams": true,
+                    "output_unigrams_if_no_shingles": false,
+                    "token_separator": " ",
+                    "filler_token": " "
+                },
+                "title_shingle": {
+                    "type": "shingle",
+                    "min_shingle_size": 2,
+                    "max_shingle_size": 3,
+                    "output_unigrams": false,
+                    "output_unigrams_if_no_shingles": false,
+                    "token_separator": " ",
+                    "filler_token": " "
+                },
+                "year_filter": {
+                    "type": "length",
+                    "max": "4",
+                    "min": "4"
+                },
+                "isbn_filter": {
+                    "type": "pattern_replace",
+                    "replacement": "",
+                    "pattern": "[^\\d\\w]"
+                }
+            },
+            "tokenizer": {
+                "num_pattern": {
+                    "flags": "",
+                    "pattern": "\\D",
+                    "type": "pattern",
+                    "group": "-1"
+                }
+            },
+            "analyzer": {
+                "plot_en": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "stopwords": "_english_",
+                    "language": "english",
+                    "filter": [
+                        "lowercase",
+                        "asciifolding",
+                        "stemmer",
+                        "snowball",
+                        "stop",
+                        "apostrophe"
+                    ]
+                },
+                "title_en": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "stopwords": "_english_",
+                    "language": "english",
+                    "filter": [
+                        "lowercase",
+                        "asciifolding",
+                        "stemmer",
+                        "apostrophe",
+                        "number_synonyms"
+                    ]
+                },
+                "title_en_shingle": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "stopwords": "_english_",
+                    "language": "english",
+                    "filter": [
+                        "lowercase",
+                        "asciifolding",
+                        "apostrophe",
+                        "title_shingle"
+                    ]
+                },
+                "name_en_shingle": {
+                    "type": "custom",
+                    "tokenizer": "standard",
+                    "stopwords": "_english_",
+                    "language": "english",
+                    "filter": [
+                        "lowercase",
+                        "asciifolding",
+                        "name_shingle"
+                    ]
+                },
+                "year_analyzer": {
+                    "type": "custom",
+                    "tokenizer": "num_pattern",
+                    "filter": [
+                        "year_filter"
+                    ]
+                },
+                "isbn_analyzer": {
+                    "type": "custom",
+                    "tokenizer": "keyword",
+                    "filter": [
+                        "isbn_filter",
+                        "uppercase"
+                    ]
+                }
+            }
+        }
+    },
+    "mappings": {
+        "_default_": {
+            "include_in_all": false,
+            "dynamic": false,
+            "date_detection": false
+        },
+        "books": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "author_names": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "subtitle": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en"
+                },
+                "characters": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "authors": {
+                    "type": "nested",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        }
+                    }
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "covers": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "dewey_number": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "first_publish_date": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "first_publish_year"
+                },
+                "first_publish_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "lc_classification": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "links": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "revision": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "subject_people": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "copy_to": "subjects_analyzed"
+                },
+                "subject_places": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "copy_to": "subjects_analyzed"
+                },
+                "subject_times": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "copy_to": "subjects_analyzed"
+                },
+                "subjects": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "copy_to": "subjects_analyzed"
+                },
+                "subjects_analyzed": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en",
+                    "position_offset_gap": 10
+                },
+                "editions": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                }
+            }
+        },
+        "editions": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "authors": {
+                    "type": "nested",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        }
+                    }
+                },
+                "author_names": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "by_statement": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "copyright_date": {
+                    "type": "string",
+                    "index": "no",
+                    "copy_to": "copyright_year"
+                },
+                "copyright_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "copyright_int": {
+                    "type": "integer"
+                },
+                "covers": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "dewey_class": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "download_urls": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "edition_name": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "full_title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en"
+                },
+                "genres": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "identifiers": {
+                    "type": "nested",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                },
+                "isbn": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "isbn_analyzer"
+                },
+                "languages": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "lc_classification": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "links": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "number_of_pages": {
+                    "type": "integer"
+                },
+                "other_titles": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en"
+                },
+                "pagination": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "physical_format": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "publish_country": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "publish_date": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "publish_year"
+                },
+                "publish_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "publish_int": {
+                    "type": "integer"
+                },
+                "publishers": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "publishers_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "publisher_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "publisher_name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "publish_places": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "purchase_urls": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "revision": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "series": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en"
+                },
+                "size": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "subject_people": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "copy_to": "subjects_analyzed"
+                },
+                "subject_places": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "copy_to": "subjects_analyzed"
+                },
+                "subject_times": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "copy_to": "subjects_analyzed"
+                },
+                "subjects": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "copy_to": "subjects_analyzed"
+                },
+                "subjects_analyzed": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "subtitle": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en"
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "title_prefix": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "translated_from": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "translation_of": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "weight": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "works": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                }
+            }
+        },
+        "writers": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "alternative_names": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "birth_date": {
+                    "type": "string",
+                    "index": "no",
+                    "copy_to": "birth_year"
+                },
+                "death_date": {
+                    "type": "string",
+                    "index": "no",
+                    "copy_to": "death_year"
+                },
+                "birth_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "death_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "birth_actual": {
+                    "type": "date"
+                },
+                "death_actual": {
+                    "type": "date"
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "birth_place": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "country": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "location" : {
+                            "type" : "geo_point",
+                            "fielddata" : {
+                                "format" : "compressed",
+                                "precision" : "1km"
+                            }
+                        }
+                    }
+                },
+                "death_place": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "country": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "location" : {
+                            "type" : "geo_point",
+                            "fielddata" : {
+                                "format" : "compressed",
+                                "precision" : "1km"
+                            }
+                        }
+                    }
+                },
+                "identifiers": {
+                    "type": "nested",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                }
+            }
+        },
+        "movies": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "awards": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "cast": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "countries": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "characters": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "directors": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "genres": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "imdb_id": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "imdb_rating": {
+                    "type": "double"
+                },
+                "imdb_votes": {
+                    "type": "integer"
+                },
+                "languages": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "metacritic": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "small_plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "poster": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "rating": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "released": {
+                    "type": "date"
+                },
+                "runtime": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "runtime_int": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "movie_type": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "writers": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "year": {
+                    "type": "integer"
+                },
+                "subtitle_analyzed": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "subtitle_urls": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "trailers": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "publishers_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "publisher_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "publisher_name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "publishers": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "cast_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "cast_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        },
+                        "role": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                }
+            }
+        },
+        "series": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "awards": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "cast": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "countries": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "cast_id": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "characters": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "directors": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "genres": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "imdb_id": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "imdb_rating": {
+                    "type": "double"
+                },
+                "imdb_votes": {
+                    "type": "integer"
+                },
+                "languages": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "metacritic": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "small_plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "poster": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "rating": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "released": {
+                    "type": "date"
+                },
+                "runtime": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "runtime_int": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "movie_type": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "writers": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "year": {
+                    "type": "integer"
+                },
+                "channel": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "ended": {
+                    "type": "boolean"
+                },
+                "trailers": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "publishers_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "publisher_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "publisher_name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "publishers": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "cast_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "cast_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        },
+                        "role": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                }
+            }
+        },
+        "episodes": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "awards": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "cast": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "cast_id": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "countries": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "characters": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "directors": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "genres": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "imdb_id": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "imdb_rating": {
+                    "type": "double"
+                },
+                "imdb_votes": {
+                    "type": "integer"
+                },
+                "languages": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "metacritic": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "small_plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "poster": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "rating": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "released": {
+                    "type": "date"
+                },
+                "runtime": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "runtime_int": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "writers": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "year": {
+                    "type": "integer"
+                },
+                "subtitle_analyzed": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "subtitle_urls": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "serie_id": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "serie": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "serie_shingle"
+                },
+                "serie_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "season": {
+                    "type": "integer"
+                },
+                "episode": {
+                    "type": "integer"
+                },
+                "season_string": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "episode_string": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "trailers": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "publishers_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "publisher_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "publisher_name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "publishers": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "cast_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "cast_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        },
+                        "role": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                }
+            }
+        },
+        "videogames": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "alternative_names": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "coop": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "developer": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "esrb": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "characters": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "genres": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "images": {
+                    "type": "object",
+                    "properties": {
+                        "image_type": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "url": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "side": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "thumb": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "width": {
+                            "type": "integer",
+                            "index": "no"
+                        },
+                        "height": {
+                            "type": "integer",
+                            "index": "no"
+                        }
+                    }
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "platform": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "platform_id": {
+                    "type": "integer"
+                },
+                "players": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "publishers": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "rating_vote": {
+                    "type": "double"
+                },
+                "released": {
+                    "type": "date"
+                },
+                "trailers": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "publishers_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "publisher_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "publisher_name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "cast_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "cast_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        },
+                        "role": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                },
+                "cast": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                }                
+            }
+        },
+        "recipies": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "ingredients": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "recipe_source": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "url": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "recipe_yield": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "poster": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "prep_time": {
+                    "type": "integer"
+                },
+                "cook_time": {
+                    "type": "integer"
+                },
+                "total_time": {
+                    "type": "integer"
+                },
+                "prep_time_string": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "cook_time_string": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "total_time_string": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "recipe_category": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "creator": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "recipe_instructions": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "ingredients_list": {
+                    "type": "nested",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "title_en"
+                        },
+                        "quantity": {
+                            "type": "double"
+                        },
+                        "uom": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "string_quantity": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "notes": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "category": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "product_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                }
+            }   
+        },
+        "painters": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "alternative_names": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "birth_date": {
+                    "type": "string",
+                    "index": "no",
+                    "copy_to": "birth_year"
+                },
+                "death_date": {
+                    "type": "string",
+                    "index": "no",
+                    "copy_to": "death_year"
+                },
+                "birth_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "death_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "birth_actual": {
+                    "type": "date"
+                },
+                "death_actual": {
+                    "type": "date"
+                },
+                "birth_place": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "country": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "location" : {
+                            "type" : "geo_point",
+                            "fielddata" : {
+                                "format" : "compressed",
+                                "precision" : "1km"
+                            }
+                        }
+                    }
+                },
+                "death_place": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "country": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "location" : {
+                            "type" : "geo_point",
+                            "fielddata" : {
+                                "format" : "compressed",
+                                "precision" : "1km"
+                            }
+                        }
+                    }
+                }
+            }   
+        },
+        "paintings": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "other_titles": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en"
+                },
+                "characters": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "painter": {
+                    "type": "nested",
+                    "properties": {
+                        "painter_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        }
+                    }
+                },
+                "size": {
+                    "type": "object",
+                    "properties": {
+                        "width": {
+                            "type": "double",
+                            "index": "no"
+                        },
+                        "height": {
+                            "type": "double",
+                            "index": "no"
+                        },
+                        "depth": {
+                            "type": "double",
+                            "index": "no"  
+                        },
+                        "uom": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "size_string": {
+                            "type": "string",
+                            "index": "no"
+                        }
+                    }
+                },
+                "image": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "url": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "painted_date": {
+                    "type": "string",
+                    "index": "no",
+                    "copy_to": "painted_year"
+                },
+                "painted_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "form": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "technique": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "genres": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "school": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "copies": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "museum": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        },
+                        "city": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "country": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "location" : {
+                            "type" : "geo_point",
+                            "fielddata" : {
+                                "format" : "compressed",
+                                "precision" : "3m"
+                            }
+                        },
+                        "room": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "full_location": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "museum_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "is_current": {
+                            "type": "boolean"
+                        },
+                        "temporary": {
+                            "type": "nested",
+                            "properties": {
+                                "from_date": {
+                                    "type": "date"
+                                },
+                                "to_date": {
+                                    "type": "date"
+                                }
+                            }
+                        }
+                    }
+                },
+                "commisioned_by": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                }
+            }   
+        },
+        "museums": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "url": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "address": {
+                    "type": "object",
+                    "properties": {
+                        "street": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"  
+                        },
+                        "postalcode": {
+                            "type": "string",
+                            "index": "no"  
+                        },
+                        "email": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "phone": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "city": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "country": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "location" : {
+                            "type" : "geo_point",
+                            "fielddata" : {
+                                "format" : "compressed",
+                                "precision" : "3m"
+                            }
+                        }
+                    }
+                },
+                "prices": {
+                    "type": "nested",
+                    "properties": {
+                        "who": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "price": {
+                            "type": "double"
+                        },
+                        "currency": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                },
+                "open": {
+                    "type": "nested",
+                    "properties": {
+                        "day": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "from": {
+                            "type": "double"
+                        },
+                        "to": {
+                            "type": "double"
+                        }
+                    }
+                },
+                "museum_type": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                }
+            }
+        },
+        "rss_channels": {
+            "_id" : {
+                "path" : "rss_url"
+            },
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "rss_url": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "site_url": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "image": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "tags": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en"
+                },
+                "podcast": {
+                    "type": "boolean"
+                },
+                "is_news": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "products": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "barcode": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "category": {
+                    "type": "string",
+                    "index": "not_analyzed",
+                    "position_offset_gap": 10
+                },
+                "brand": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "other_values": {
+                    "type": "nested",
+                    "properties": {
+                        "map": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "title_en"
+                        }
+                    }
+                }
+            }  
+        },
+        "artists": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "name": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "alternative_names": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "name_variations": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "real_name": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "data_quality": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "members": {
+                    "type": "nested",
+                    "properties": {
+                        "artist_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        }
+                    }
+                },
+                "url": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "images": {
+                    "type": "object",
+                    "properties": {
+                        "image_type": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "url": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "side": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "thumb": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "width": {
+                            "type": "integer",
+                            "index": "no"
+                        },
+                        "height": {
+                            "type": "integer",
+                            "index": "no"
+                        }
+                    }
+                },
+                "birth_date": {
+                    "type": "string",
+                    "index": "no",
+                    "copy_to": "birth_year"
+                },
+                "death_date": {
+                    "type": "string",
+                    "index": "no",
+                    "copy_to": "death_year"
+                },
+                "birth_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "death_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "birth_actual": {
+                    "type": "date"
+                },
+                "death_actual": {
+                    "type": "date"
+                },
+                "birth_place": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "country": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "location" : {
+                            "type" : "geo_point",
+                            "fielddata" : {
+                                "format" : "compressed",
+                                "precision" : "1km"
+                            }
+                        }
+                    }
+                },
+                "death_place": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "country": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "location" : {
+                            "type" : "geo_point",
+                            "fielddata" : {
+                                "format" : "compressed",
+                                "precision" : "1km"
+                            }
+                        }
+                    }
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "identifiers": {
+                    "type": "nested",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                },
+                "band": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "band_name": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                }
+            }
+        },
+        "discs": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "identifiers": {
+                    "type": "nested",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                },
+                "artist": {
+                    "type": "nested",
+                    "properties": {
+                        "artist_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "name": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle"
+                        },
+                        "role": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "tracks": {
+                            "type": "string",
+                            "index": "no"
+                        }
+                    }  
+                },
+                "images": {
+                    "type": "object",
+                    "properties": {
+                        "image_type": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "url": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "side": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "thumb": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "width": {
+                            "type": "integer",
+                            "index": "no"
+                        },
+                        "height": {
+                            "type": "integer",
+                            "index": "no"
+                        }
+                    }
+                },
+                "labels": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "formats": {
+                    "type": "nested",
+                    "properties": {
+                        "format_name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "qty": {
+                            "type": "integer",
+                            "index": "no"
+                        },
+                        "text": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "descriptions": {
+                            "type": "string",
+                            "index": "no"
+                        }
+                    }
+                },
+                "genres": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "styles": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "countries": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "released": {
+                    "type": "date"
+                },
+                "notes": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "data_quality": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "tracks": {
+                    "type": "nested",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "title_en",
+                            "copy_to": "title_shingle"
+                        },
+                        "title_shingle": { 
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "title_en_shingle"
+                        },
+                        "position": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "duration": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "lyrics": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "lyrics_shingle": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "title_en_shingle"
+                        }
+                    }
+                },
+                "videos": {
+                    "type": "object",
+                    "prooerties": {
+                        "url": {
+                            "type": "string",
+                            "index": "no"
+                        },
+                        "video_title": {
+                            "type": "string",
+                            "index": "no"
+                        }
+                    }
+                }
+            }
+        },
+        "comics": {
+            "properties": {
+                "deleted": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "last_updated": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "based_on": {
+                    "type": "nested",
+                    "properties": {
+                        "media": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "user_reviews": {
+                    "type": "nested",
+                    "properties": {
+                        "user_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "review_text": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "review_time": {
+                            "type": "date",
+                            "index": "no"
+                        },
+                        "user_vote": {
+                            "type": "short"
+                        }
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "title_shingle"
+                },
+                "title_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "serie": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "serie_shingle"
+                },
+                "serie_shingle": { 
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en_shingle"
+                },
+                "volume": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "volume_double": {
+                    "type": "double"
+                },
+                "issue_number": {
+                    "type": "string",
+                    "index": "not_analyzed"  
+                },
+                "issue_number_double": {
+                    "type": "double"
+                },
+                "display_volume_with_number": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "serie_id": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "indicia_publisher_name": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "indicia_pub_not_printed": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "brand_name": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle"
+                },
+                "no_brand": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "publication_date": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "publish_date": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en",
+                    "copy_to": "publish_year"
+                },
+                "publish_year": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "year_analyzer"
+                },
+                "publish_int": {
+                    "type": "integer"
+                },
+                "released": {
+                    "type": "date"
+                },
+                "sort_code": {
+                    "type": "integer"
+                },
+                "price_string": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "prices": {
+                    "type": "nested",
+                    "properties": {
+                        "who": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "price": {
+                            "type": "double"
+                        },
+                        "currency": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                },
+                "number_of_pages": {
+                    "type": "integer"
+                },
+                "page_count_uncertain": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "indicia_frequency": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "no_indicia_frequency": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "editing": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "notes": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "created": {
+                    "type": "date",
+                    "index": "no"
+                },
+                "reserved": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "is_indexed": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "no_title": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "on_sale_date_uncertain": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "no_rating": {
+                    "type": "boolean",
+                    "index": "no"
+                },
+                "is_current": {
+                    "type": "boolean"
+                },
+                "isbn": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "isbn_analyzer"
+                },
+                "variant_of": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "variant_name": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "title_en"
+                },
+                "physical_format": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "color": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "dimensions": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "paper_stock": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "binding": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "publishing_format": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "publish_country": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "languages": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "plot": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "identifiers": {
+                    "type": "nested",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "value": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }
+                },
+                "publishers": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "publishers_nested": {
+                    "type": "nested",
+                    "properties": {
+                        "publisher_id": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "publisher_name": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        }
+                    }  
+                },
+                "feature": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "characters": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "scripts": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "pencils": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "inks": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "colorers": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "letterers": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "name_en_shingle",
+                    "position_offset_gap": 10
+                },
+                "genres": {
+                    "type": "string",
+                    "index": "not_analyzed"
+                },
+                "stories": {
+                    "type": "nested",
+                    "properties": {
+                        "feature": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle",
+                            "position_offset_gap": 10
+                        },
+                        "characters": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle",
+                            "position_offset_gap": 10
+                        },
+                        "scripts": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle",
+                            "position_offset_gap": 10
+                        },
+                        "pencils": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle",
+                            "position_offset_gap": 10
+                        },
+                        "inks": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle",
+                            "position_offset_gap": 10
+                        },
+                        "colorers": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle",
+                            "position_offset_gap": 10
+                        },
+                        "letterers": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle",
+                            "position_offset_gap": 10
+                        },
+                        "editing": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "name_en_shingle",
+                            "position_offset_gap": 10
+                        },
+                        "genres": {
+                            "type": "string",
+                            "index": "not_analyzed"
+                        },
+                        "plot": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "number_of_pages": {
+                            "type": "integer"
+                        },
+                        "order": {
+                            "type": "integer",
+                            "index": "no"
+                        },
+                        "title": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "title_en",
+                            "copy_to": "title_shingle"
+                        },
+                        "title_shingle": { 
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "title_en_shingle"
+                        },
+                        "notes": {
+                            "type": "string",
+                            "index": "analyzed",
+                            "analyzer": "plot_en"
+                        },
+                        "story_type": {
+                            "type": "string",
+                            "index": "no"
+                        }
+                    }
+                },
+                "text": {
+                    "type": "string",
+                    "index": "analyzed",
+                    "analyzer": "plot_en"
+                },
+                "url": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "purchase_urls": {
+                    "type": "string",
+                    "index": "no"
+                }
+            }
+        }
+    }
+}

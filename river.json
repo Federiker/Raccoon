@@ -1,0 +1,15 @@
+{ 
+	"type" : "couchdb",
+	 "couchdb" : { 
+		 "host" : "localhost", 
+		 "port" : 5984, 
+		 "db" : "<SOURCE_TYPE>", 
+		 "filter" : null 
+	}, 
+	"index" : {
+		"index" : "whitesands", 
+		"type" : "<TARGET_TYPE>", 
+		"bulk_size" : "100", 
+		"bulk_timeout" : "1000ms" 
+	}
+}

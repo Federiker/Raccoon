@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace Raccoon.Objects
 {
-    public class Response <T> where T: Common
+    public class Response <T> where T: Common, new()
     {
         [JsonProperty("took", NullValueHandling = NullValueHandling.Ignore)]
         public long? TookMs { get; set; }
@@ -37,25 +37,17 @@ namespace Raccoon.Objects
 
         public static async Task<Response<T>> MakeRequest(string query)
         {
-            #region GetMediaType
-            string media = "";
-            Type t = typeof(T);
-            if (t == typeof(Books))
-            {
-                media = "books";
-            }
-            else if (t == typeof(Videogames))
-            {
-                media = "videogames";
-            }
-            #endregion
-
             #region Uri creation
             UriBuilder ub = new UriBuilder();
             ub.Scheme = "http";
             ub.Host = "localhost";  //TODO: address
             ub.Port = 1337;
-            ub.Query = string.Format("q={0}&m={1}", WebUtility.UrlEncode(query), WebUtility.UrlEncode(media));
+
+            ub.Query = string.Format(
+                "q={0}&m={1}", 
+                WebUtility.UrlEncode(query), 
+                WebUtility.UrlEncode(new T().MediaTypeName)
+            );
             #endregion
 
             using (HttpClient client = new HttpClient())

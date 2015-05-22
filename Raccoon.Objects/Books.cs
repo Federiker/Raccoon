@@ -10,5 +10,14 @@ namespace Raccoon.Objects
     {
         [JsonProperty("title", NullValueHandling = NullValueHandling.Ignore)]
         public string Title { get; set; }
+
+        [JsonIgnore]
+        public override string MediaTypeName
+        {
+            get
+            {
+                return "books";
+            }
+        }
     }
 }
